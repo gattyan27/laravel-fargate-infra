@@ -37,7 +37,6 @@ resource "aws_route" "nat_gateway_private" {
   route_table_id         = aws_route_table.private[each.key].id
 }
 
-
 resource "aws_route_table_association" "private" {
   for_each = var.azs
 
