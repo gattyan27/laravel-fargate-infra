@@ -20,6 +20,12 @@ data "aws_iam_role" "ecs_task" {
 data "aws_lb_target_group" "this" {
   name = "${local.name_prefix}-${local.service_name}"
 }
+data "aws_security_group" "cache_foobar" {
+  name = "${local.name_prefix}-main-cache-foobar"
+}
+data "aws_security_group" "db_foobar" {
+  name = "${local.name_prefix}-main-db-foobar"
+}
 data "aws_security_group" "vpc" {
   name = "${local.name_prefix}-main-vpc"
 }

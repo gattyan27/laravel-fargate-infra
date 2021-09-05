@@ -51,7 +51,15 @@ resource "aws_iam_role_policy" "s3" {
             "s3:GetObject"
           ],
           "Resource" : "arn:aws:s3:::gattyan27-tfstate/${local.system_name}/${local.env_name}/cicd/app_${local.service_name}_*.tfstate"
-      }, ]
+        },
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "s3:PutObject"
+          ],
+          "Resource" : "${data.aws_s3_bucket.env_file.arn}/*"
+        }
+      ]
   })
 }
 
@@ -66,7 +74,9 @@ resource "aws_iam_role_policy" "ecs" {
           "Sid" : "RegisterTaskDefinition",
           "Effect" : "Allow",
           "Action" : [
-            "ecs:RegisterTaskDefinition"
+            "ecs:RegisterTaskDefinition",
+            "ecs:ListTaskDefinitions",
+            "ecs:DescribeTaskDefinition"
           ],
           "Resource" : "*"
         },
@@ -80,7 +90,8 @@ resource "aws_iam_role_policy" "ecs" {
             data.aws_iam_role.ecs_task.arn,
             data.aws_iam_role.ecs_task_execution.arn,
           ]
-          }, {
+        },
+        {
           "Sid" : "DeployService",
           "Effect" : "Allow",
           "Action" : [
@@ -89,7 +100,35 @@ resource "aws_iam_role_policy" "ecs" {
           ],
           "Resource" : [
             data.aws_ecs_service.this.arn
-        ] }
+        ] },
+        {
+          "Sid" : "RunAndWaitTask",
+          "Effect" : "Allow",
+          "Action" : [
+            "ecs:RunTask",
+            "ecs:DescribeTasks"
+          ],
+          "Condition" : {
+            "ArnEquals" : {
+              "ecs:cluster" : data.aws_ecs_cluster.this.arn
+            }
+          },
+          "Resource" : [
+            "arn:aws:ecs:${data.aws_region.current.id}:${data.aws_caller_identity.self.id}:task-definition/${local.name_prefix}-${local.service_name}:*",
+            "arn:aws:ecs:${data.aws_region.current.id}:${data.aws_caller_identity.self.id}:task/*"
+          ]
+        },
+        {
+          "Sid" : "GetLogEvents",
+          "Effect" : "Allow",
+          "Action" : [
+            "logs:GetLogEvents"
+          ],
+          "Resource" : [
+            data.aws_cloudwatch_log_group.nginx.arn,
+            data.aws_cloudwatch_log_group.php.arn
+          ]
+        }
     ] }
   )
 }
